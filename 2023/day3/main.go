@@ -48,8 +48,8 @@ func DetectInt(s string) (int, int) {
 			length = len(intList)
 			return val, length
 		}
+		break
 	}
-
 	return val, length
 }
 
@@ -63,15 +63,21 @@ func main() {
 	file, _ := os.Open("input.txt")
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
-	var row string
-	rowNum := 0
+
+	skip, n, rowNum := 0, 0, 0
 	for scanner.Scan() {
-		row = scanner.Text()
+		row := scanner.Text()
 		fmt.Println(row)
 		for i, _ := range row {
-			if n, skip := DetectInt(row[i:]); skip > 0 {
-				fmt.Printf("Found int of length %d - %d\n", skip, n)
-				return
+			if skip > 0 {
+				skip--
+				continue
+			}
+			fmt.Printf("%c", row[i])
+
+			if n, skip = DetectInt(row[i:]); skip > 0 {
+				fmt.Printf("\nFound int of length %d - %d\n", skip, n)
+				skip--
 
 				// Search all around for symbols
 				// If symbol, add this to the total
@@ -79,5 +85,6 @@ func main() {
 		}
 
 		rowNum++
+		break
 	}
 }
