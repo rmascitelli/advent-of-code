@@ -15,6 +15,15 @@ func IsInteger(ch rune) (int, bool) {
 	}
 }
 
+func DetectSymbols(s string) bool {
+	for _, ch := range s {
+		if !(ch >= 48 && ch <= 57) && ch != 46 {
+			return true
+		}
+	}
+	return false
+}
+
 func DetectInt(s string) (int, int) {
 	val, length := 0, 0
 	var next rune
@@ -33,6 +42,9 @@ func DetectInt(s string) (int, int) {
 			for ok {
 				intList = append(intList, n)
 				j++
+				if i+j == len(s) {
+					break
+				}
 				next = rune(s[i+j])
 				n, ok = IsInteger(next)
 			}
@@ -53,6 +65,67 @@ func DetectInt(s string) (int, int) {
 	return val, length
 }
 
+func Part1(lines []string) {
+	totalSum := 0
+	skip, n, rowNum := 0, 0, 0
+	for _, row := range lines {
+		//fmt.Println("ROWNUM =", rowNum)
+		for i, _ := range row {
+			if skip > 0 {
+				skip--
+				continue
+			}
+			//fmt.Printf("%c", row[i])
+
+			if n, skip = DetectInt(row[i:]); skip > 0 {
+				//fmt.Printf("\nFound int of length %d - %d\n", skip, n)
+				addInt := false
+
+				leftBound := i
+				if i > 0 {
+					leftBound -= 1
+				}
+
+				rightBound := i + skip
+				if i+skip+1 < len(row) {
+					rightBound += 1
+				}
+
+				// Check prev row
+				if rowNum > 0 {
+					if DetectSymbols(lines[rowNum-1][leftBound:rightBound]) {
+						addInt = true
+					}
+				}
+
+				// Check cur row
+				if DetectSymbols(lines[rowNum][leftBound:rightBound]) {
+					addInt = true
+				}
+
+				// Check next row
+				if rowNum < len(lines)-1 {
+					if DetectSymbols(lines[rowNum+1][leftBound:rightBound]) {
+						addInt = true
+					}
+				}
+
+				if addInt {
+					//fmt.Println("Found symbol - adding", n)
+					totalSum += n
+				}
+
+				skip--
+			}
+		}
+
+		//fmt.Println("ROWSUM", totalSum)
+		rowNum++
+	}
+
+	fmt.Println("Sum of valid parts =", totalSum)
+}
+
 // Detect an int
 // Determine its size + "scanning boundaries"
 // Scan the boundaries for symbols
@@ -64,27 +137,11 @@ func main() {
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 
-	skip, n, rowNum := 0, 0, 0
+	lines := []string{}
 	for scanner.Scan() {
 		row := scanner.Text()
-		fmt.Println(row)
-		for i, _ := range row {
-			if skip > 0 {
-				skip--
-				continue
-			}
-			fmt.Printf("%c", row[i])
-
-			if n, skip = DetectInt(row[i:]); skip > 0 {
-				fmt.Printf("\nFound int of length %d - %d\n", skip, n)
-				skip--
-
-				// Search all around for symbols
-				// If symbol, add this to the total
-			}
-		}
-
-		rowNum++
-		break
+		lines = append(lines, row)
 	}
+
+	Part1(lines)
 }
